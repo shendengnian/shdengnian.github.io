@@ -1,19 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<search>
-  <entry>
-    <title><![CDATA[线上从零部署运行TP5]]></title>
-    <url>%2F2018%2F03%2F31%2Fwanfa%2F</url>
-    <content type="text"><![CDATA[在部署TP5环境前，我们还是很有必要先规划好该从何下手，比如版本号呀，安装的先后顺序呀，版本号由于道叔的TP5是5.0.11的版本，已经不支持PHP5.4及以下，这导致刚装上来就一个大坑。因为阿里云服务器yum装的版本默认是5.4的，然后就各种rm -rf的卸，所以PHP版本号建议5.6以上7.0以下，那为啥要7.0以下呢？因为PHP7.0以上已经废弃使用mysql_connect方法连接数据库，改用mysqli或者pdo方法了，道叔本地的PHP版本还是5.6.30，要是线上装了7.0以上的版本，连接数据库的方法又得各种重构，本着宁可睡觉，绝不乱折腾的精神，所以安装的版本号我们还是得对应自己实际项目情况装，mysql和apache就不多说了，一路yum o(╯□╰)o。 那么安装的先后顺序又是什么鬼！平常我们都是先安装mysql，然后才能去安装php。假如先安装php，后安装mysql，由于php需要连接mysql，因而在php引擎中需要配置使用mysql.so扩展。这时需要手动编译生成mysql.so扩展。 书中一般是常常这样的顺序安装：先安装mysql，然后再安装php，很少看到先安装php后安装mysql的，除了道叔这傻叉外！还是踩了各种神坑后才发现这样做是因为安装好mysql后，mysql.so这个模块才能生成，记得一个细节，在安装php的时候，需要提供mysql的路径，由php帮助编译生成mysql.so模块。mysql.so这个模块是在安装好php的时候生成的。生成这个模块需要用到一个东西： mysql客户端！如果先安装php，后安装mysql。那么无法按照原来的方式(由php帮助生成mysql.so模块)挂接mysql.so。通过实践（血与泪的实践）,发现使用phpize工具生成mysql.so可以解决这个问题。但是这样会不会太繁琐了呢？既然知道了原因，直接就按照顺序apache-&gt;mysql-&gt;php这样装下来不就好了嘛！好吧道叔承认是自己懒了，总会想方设法的偷懒！有道友对生成mysql.so的过程感兴趣的可以自行网上查询，本文主要介绍的还是避免踩一些小坑，可以快速部署，能让广大道友早日印证仙（猿）道的不二法诀 所以这么一通规划下来，我们部署环境安装顺序就有了目标：apache/2.4.6-&gt;mysql/5.7.21-&gt;php/5.6.3，道友们要是懒得记安装顺序再也不用担心啦，只要知道我们本地经常使用到的LAMP MAMP WAMP集成软件的首写字母代表的含义然后按照顺序安装！😯噢~~~是不是瞬间茅塞顿开了呢😆 步骤一yum安装apacheyum install httpd 安装httpd会自动安装依赖包，一路YYY过来，安装成功后输入以下命令查看下版本号： httpd -v 安装好后找到找到httpd.conf配置文件，yum自动安装的话会给我们安装到etc/httpd/conf/httpd.conf这里，打开配置文件 把里面的 AllowOverride None 全部修改为 AllowOverride All 找到ServerName，改为自己服务器要指向的一个域名，记得指向这个域名前要先在域名商这解析记录值，然后保存重启服务器 systemctl start httpd.service #启动apache systemctl stop httpd.service #停止apache systemctl restart httpd.service #重启apache systemctl enable httpd.service #设置apache开机启动 最后在浏览器输入指向的域名，当跳出apache这个页面，恭喜道友，您完成了步骤一 步骤二安装mysql下载并安装mysql官方的 Yum Repository wget -i -c http://dev.mysql.com/get/mysql57-community-release-el7-10.noarch.rpm 使用上面的命令就直接下载了安装用的Yum Repository，然后就可以直接yum安装 yum -y install mysql57-community-release-el7-10.noarch.rpm 开始安装mysql服务器，这步可能会花些时间，安装完成后就会覆盖掉之前的mariadb yum -y install mysql-community-server 至此mysql就安装完成了，但是我们还要做一些设置 首先启动mysql systemctl start mysqld.service 查看mysql运行状态 systemctl status mysqld.service 此时mysql已经开始正常运行，不过要想进入mysql还得先找出此时root用户的密码，通过如下命令可以在日志文件中找出密码： grep &quot;password&quot; /var/log/mysqld.log 如下命令进入数据库： mysql -uroot -p 输入刚才得到的初始密码，此时不能做任何事情，因为mysql默认必须修改密码之后才能操作数据库，但是问题来了，像道叔这等记性的OrdMan懒人连银行卡支付宝微信QQ手机锁屏服务器等等密码都是一个密码有时都会忘记的，更不要说指望能记住mysql这等初始密码规则的密码，要是道友觉得这样安全性很高，可以忽略此步，就是想密码会略微有些麻烦，修改密码规则如下（注意，一定是要登进mysql后才能操作,命令后面也记得带上分号）： mysql&gt; set global validate_password_policy=0; mysql&gt; set global validate_password_length=1; 此时密码就可以设置的很简单，例如1234之类的。到此数据库的密码设置就完成了，就可以输入如下命令修改密码 mysql&gt; ALTER USER &apos;root&apos;@&apos;localhost&apos; IDENTIFIED BY &apos;new password&apos;; 修改成功后咱们就输入\q退出mysql，然后输入以下命令重启，密码规则就生效啦： systemctl restart mariadb.service 或者 systemctl restart mysqld.service 然后我们还要设置一下开机自启 systemctl enable mariadb.service 或者 systemctl enable mysqld.service 还有一些常见问题，远程登录授权，查看端口号，版本号，以下一一列举，所有命令都要登录数据库才能操作： 远程登录授权，%号代表所有IP号，也可以指定自己IP地址，IP地址为自己本机的网络IP地址 mysql&gt;GRANT ALL PRIVILEGES ON *.* TO &apos;root&apos;@&apos;%&apos; IDENTIFIED BY &apos;123456&apos; WITH GRANT OPTION; 查看mysql端口号 show global variables like &apos;port&apos;; 查看mysql版本号 select version(); 步骤三安装php配置yum源，以下是centos 7.0的源 yum install epel-release rpm -ivh http://rpms.famillecollet.com/enterprise/remi-release-7.rpm 使用yum list命令查看可安装的包(Packege) yum list --enablerepo=remi --enablerepo=remi-php56 | grep php yum源配置好了，下一步就安装PHP5.6 yum install --enablerepo=remi --enablerepo=remi-php56 php php-opcache php-devel php-mbstring php-mcrypt php-mysqlnd php-phpunit-PHPUnit php-pecl-xdebug php-pecl-xhprof 用PHP命令查看版本 php -v 大功告成！然后把TP5放到var/www/html/目录里，通过你的域名.com/TP5文件名/public方式访问！显示十年磨一剑，部署成功 写了这么多，其实还有很多小细节没有完善，改成最短路径，把默认的index.php入口文件通过httpd-vhosts.conf文件里的配置隐藏掉，这里就不一一细讲，因为网上一搜一大把，这篇文章也该告一段落了，希望能对看这篇文章的道友与以后自己有点帮助]]></content>
-      <tags>
-        <tag>服务器</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title><![CDATA[要么忙着活，要么忙着死]]></title>
-    <url>%2F2018%2F02%2F07%2Fdir%2F</url>
-    <content type="text"><![CDATA[要么忙着活，要么忙着死；是瑞德在监狱里度过了四十年悟出的。昨天晚上，一口气看完了《肖申克的救赎》这部经典电影，感觉与4年前看这部电影的感受有了很大的不同。以前在看情节的曲折，故事的离奇，还有结局的充满自由、诗意。但现在看到了一个封闭的世界。 一个森严的等级制度，粉饰着适度的自由（外出务工）实质为统治阶级攒取巨额利益的世界。这里可以看到图书馆老人固化的灵魂，正如进入肖申克监狱的时候所说，灵魂交给上帝，肉体交给监狱。还有黑人兄弟的理性与适应性，在很小的程度上突破肖申克的封锁，但他更是仅仅满足于此。 做到这点目的仅仅是为了在肖申克生活的更好，正如主人公最后对他所说，你远远低估了你自己的能力，在那个梦想之岛，你一样能创造希望的生活。是什么让黑人兄弟自我带上了枷锁？走出肖申克后，连上厕所也得得到百货商店老板的许可，只能叹息，灵魂归属于上帝，肉体属于“管理者”，可怕！可悲！ 这部电影里面，最突出的矛盾就是安迪对自由的极度渴望与肖申克的小黑屋，用推下屋顶的可能换来一个下午的屋顶啤酒会，更是用肖申克有使以来的最严重的惩罚——2个月的小黑屋，换来了小段时间的飞扬在肖申克上空的音乐，这也许可能对他的逃生计划造成很大的波折，但他依然如此，为什么？音乐的力量，自由的力量，希望的力量。 而这一切，与肖申克残酷的管制形成强烈的对比，成为Hopeisthebestthing这句话最有力的注解。最后，电影中反复出现了一句话，Getbusyliving,orGetbusydying。安迪用小小的手锤经过17年，挖出了一条通往自由之路，通往希望之路。 每天的坚持，每天晚上一个人孤寂的挖掘，都在说明，他是真正做到了busyliving，而图书馆老人则为肖申克忙碌50年后，busydying！你的选择是什么？]]></content>
-      <tags>
-        <tag>前言</tag>
-      </tags>
-  </entry>
+<search> 
+  
+    
+    <entry>
+      <title><![CDATA[线上从零部署运行TP5]]></title>
+      <url>/2018/03/31/wanfa/</url>
+      <content type="html"><![CDATA[<p><strong>在部署TP5环境前，我们还是很有必要先规划好该从何下手，比如版本号呀，安装的先后顺序呀，版本号由于道叔的TP5是5.0.11的版本，已经不支持PHP5.4及以下，这导致刚装上来就一个大坑。<a id="more"></a>因为阿里云服务器yum装的版本默认是5.4的，然后就各种rm -rf的卸，所以PHP版本号建议5.6以上7.0以下，那为啥要7.0以下呢？因为PHP7.0以上已经废弃使用mysql_connect方法连接数据库，改用mysqli或者pdo方法了，道叔本地的PHP版本还是5.6.30，要是线上装了7.0以上的版本，连接数据库的方法又得各种重构，本着宁可睡觉，绝不乱折腾的精神，所以安装的版本号我们还是得对应自己实际项目情况装，mysql和apache就不多说了，一路yum o(╯□╰)o</strong>。</p>
+<ul>
+<li>那么安装的先后顺序又是什么鬼！平常我们都是先安装mysql，然后才能去安装php。假如先安装php，后安装mysql，<strong>由于php需要连接mysql，因而在php引擎中需要配置使用mysql.so扩展。这时需要手动编译生成mysql.so扩展</strong>。</li>
+</ul>
+<p>书中一般是常常这样的顺序安装：先安装mysql，然后再安装php，很少看到先安装php后安装mysql的，除了道叔这傻叉外！还是踩了各种神坑后才发现这样做是因为安装好mysql后，mysql.so这个模块才能生成，记得一个细节，<strong>在安装php的时候，需要提供mysql的路径，由php帮助编译生成mysql.so模块。mysql.so这个模块是在安装好php的时候生成的</strong>。生成这个模块需要用到一个东西：</p>
+<ul>
+<li><blockquote>
+<p>mysql客户端！如果先安装php，后安装mysql。那么无法按照原来的方式(由php帮助生成mysql.so模块)挂接mysql.so。通过实践（<del>血与泪的实践</del>）,发现使用phpize工具生成mysql.so可以解决这个问题。但是这样会不会太繁琐了呢？既然知道了原因，直接就按照顺序apache-&gt;mysql-&gt;php这样装下来不就好了嘛！好吧道叔承认是自己懒了，总会想方设法的偷懒！有道友对生成mysql.so的过程感兴趣的可以自行网上查询，本文主要介绍的还是避免踩一些小坑，可以快速部署，能让广大道友早日印证仙（猿）道的不二法诀</p>
+</blockquote>
+</li>
+</ul>
+<p>所以这么一通规划下来，我们部署环境安装顺序就有了目标：<em>apache/2.4.6-&gt;mysql/5.7.21-&gt;php/5.6.3</em>，道友们要是懒得记安装顺序再也不用担心啦，只要知道我们本地经常使用到的LAMP MAMP WAMP集成软件的首写字母代表的含义然后按照顺序安装！😯噢~~~是不是瞬间茅塞顿开了呢😆</p>
+<p><br></p>
+<h2 id="步骤一"><a href="#步骤一" class="headerlink" title="步骤一"></a>步骤一</h2><h3 id="yum安装apache"><a href="#yum安装apache" class="headerlink" title="yum安装apache"></a>yum安装apache</h3><pre><code>yum install httpd
+</code></pre><p>安装httpd会自动安装依赖包，一路YYY过来，安装成功后输入以下命令查看下版本号：</p>
+<pre><code>httpd -v
+</code></pre><p>安装好后找到找到httpd.conf配置文件，yum自动安装的话会给我们安装到<strong>etc/httpd/conf/httpd.conf</strong>这里，打开配置文件</p>
+<p><strong>把里面的 AllowOverride None 全部修改为 AllowOverride All</strong></p>
+<p>找到ServerName，改为自己服务器要指向的一个域名，记得指向这个域名前要先在域名商这解析记录值，然后保存重启服务器</p>
+<pre><code>systemctl start httpd.service #启动apache
+systemctl stop httpd.service #停止apache
+systemctl restart httpd.service #重启apache
+systemctl enable httpd.service #设置apache开机启动
+</code></pre><blockquote>
+<p>最后在浏览器输入指向的域名，当跳出apache这个页面，恭喜道友，您完成了步骤一</p>
+</blockquote>
+<p><br></p>
+<h2 id="步骤二"><a href="#步骤二" class="headerlink" title="步骤二"></a>步骤二</h2><h3 id="安装mysql"><a href="#安装mysql" class="headerlink" title="安装mysql"></a>安装mysql</h3><p><strong>下载并安装mysql官方的 Yum Repository</strong></p>
+<pre><code>wget -i -c http://dev.mysql.com/get/mysql57-community-release-el7-10.noarch.rpm
+</code></pre><p><strong>使用上面的命令就直接下载了安装用的Yum Repository，然后就可以直接yum安装</strong></p>
+<pre><code>yum -y install mysql57-community-release-el7-10.noarch.rpm
+</code></pre><p><strong>开始安装mysql服务器，这步可能会花些时间，安装完成后就会覆盖掉之前的mariadb</strong></p>
+<pre><code>yum -y install mysql-community-server
+</code></pre><p><strong>至此mysql就安装完成了，但是我们还要做一些设置</strong></p>
+<p><strong>首先启动mysql</strong></p>
+<pre><code>systemctl start  mysqld.service
+</code></pre><p><strong>查看mysql运行状态</strong></p>
+<pre><code>systemctl status mysqld.service
+</code></pre><p><strong>此时mysql已经开始正常运行，不过要想进入mysql还得先找出此时root用户的密码，通过如下命令可以在日志文件中找出密码：</strong></p>
+<pre><code>grep &quot;password&quot; /var/log/mysqld.log
+</code></pre><p>如下命令进入数据库：</p>
+<pre><code>mysql -uroot -p
+</code></pre><p>输入刚才得到的初始密码，此时不能做任何事情，因为mysql默认必须修改密码之后才能操作数据库，但是问题来了，像道叔这等记性的OrdMan懒人连银行卡支付宝微信QQ手机锁屏服务器等等密码都是一个密码有时都会忘记的，更不要说指望能记住mysql这等初始密码规则的密码，要是道友觉得这样安全性很高，可以忽略此步，就是想密码会略微有些麻烦，修改密码规则如下（注意，一定是要登进mysql后才能操作,命令后面也记得带上分号）：</p>
+<pre><code>mysql&gt; set global validate_password_policy=0;
+mysql&gt; set global validate_password_length=1;
+</code></pre><p>此时密码就可以设置的很简单，例如1234之类的。到此数据库的密码设置就完成了，就可以输入如下命令修改密码</p>
+<pre><code>mysql&gt; ALTER USER &apos;root&apos;@&apos;localhost&apos; IDENTIFIED BY &apos;new password&apos;;
+</code></pre><p>修改成功后咱们就输入\q退出mysql，然后输入以下命令重启，密码规则就生效啦：</p>
+<pre><code>systemctl restart mariadb.service 或者 systemctl restart mysqld.service
+</code></pre><p>然后我们还要设置一下开机自启</p>
+<pre><code>systemctl enable mariadb.service 或者 systemctl enable mysqld.service
+</code></pre><p>还有一些常见问题，远程登录授权，查看端口号，版本号，以下一一列举，所有命令都要登录数据库才能操作：</p>
+<p><strong>远程登录授权，%号代表所有IP号，也可以指定自己IP地址，IP地址为自己本机的网络IP地址</strong></p>
+<pre><code>mysql&gt;GRANT ALL PRIVILEGES ON *.* TO &apos;root&apos;@&apos;%&apos; IDENTIFIED BY &apos;123456&apos; WITH GRANT OPTION;
+</code></pre><p><strong>查看mysql端口号</strong></p>
+<pre><code>show global variables like &apos;port&apos;; 
+</code></pre><p><strong>查看mysql版本号</strong></p>
+<pre><code>select version();
+</code></pre><p> <br></p>
+<h2 id="步骤三"><a href="#步骤三" class="headerlink" title="步骤三"></a>步骤三</h2><h3 id="安装php"><a href="#安装php" class="headerlink" title="安装php"></a>安装php</h3><p><strong>配置yum源，以下是centos 7.0的源</strong></p>
+<pre><code>yum install epel-release
+rpm -ivh http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+</code></pre><p><strong>使用yum list命令查看可安装的包(Packege)</strong></p>
+<pre><code>yum list --enablerepo=remi --enablerepo=remi-php56 | grep php
+</code></pre><p><strong>yum源配置好了，下一步就安装PHP5.6</strong></p>
+<pre><code>yum install --enablerepo=remi --enablerepo=remi-php56 php php-opcache php-devel php-mbstring php-mcrypt php-mysqlnd php-phpunit-PHPUnit php-pecl-xdebug php-pecl-xhprof
+</code></pre><p><strong>用PHP命令查看版本</strong></p>
+<pre><code>php -v
+</code></pre><p>大功告成！然后把TP5放到var/www/html/目录里，通过<strong>你的域名.com/TP5文件名/public</strong>方式访问！显示十年磨一剑，部署成功</p>
+<blockquote>
+<p>写了这么多，其实还有很多小细节没有完善，改成最短路径，把默认的index.php入口文件通过httpd-vhosts.conf文件里的配置隐藏掉，这里就不一一细讲，因为网上一搜一大把，这篇文章也该告一段落了，希望能对看这篇文章的道友与以后自己有点帮助</p>
+</blockquote>
+]]></content>
+      
+        
+        <tags>
+            
+            <tag> 服务器 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[要么忙着活，要么忙着死]]></title>
+      <url>/2018/02/07/dir/</url>
+      <content type="html"><![CDATA[<p><strong>要么忙着活，要么忙着死</strong>；是瑞德在监狱里度过了四十年悟出的。昨天晚上，一口气看完了《肖申克的救赎》这部经典电影，感觉与4年前看这部电影的感受有了很大的不同。<a id="more"></a>以前在看情节的曲折，故事的离奇，还有结局的充满自由、诗意。但现在看到了一个封闭的世界。</p>
+<p>　　一个森严的等级制度，粉饰着适度的自由（外出务工）实质为统治阶级攒取巨额利益的世界。这里可以看到图书馆老人固化的灵魂，正如进入肖申克监狱的时候所说，<strong>灵魂交给上帝，肉体交给监狱</strong>。还有黑人兄弟的理性与适应性，在很小的程度上突破肖申克的封锁，但他更是仅仅满足于此。</p>
+<p>   做到这点目的仅仅是为了在肖申克生活的更好，正如主人公最后对他所说，你远远低估了你自己的能力，在那个梦想之岛，你一样能创造希望的生活。是什么让黑人兄弟自我带上了枷锁？走出肖申克后，连上厕所也得得到百货商店老板的许可，只能叹息，灵魂归属于上帝，肉体属于“管理者”，可怕！可悲！</p>
+<p>   <em>这部电影里面，最突出的矛盾就是安迪对自由的极度渴望与肖申克的小黑屋，用推下屋顶的可能换来一个下午的屋顶啤酒会，更是用肖申克有使以来的最严重的惩罚——2个月的小黑屋，换来了小段时间的飞扬在肖申克上空的音乐，这也许可能对他的逃生计划造成很大的波折，但他依然如此，为什么？音乐的力量，自由的力量，希望的力量。</em></p>
+<p>   而这一切，与肖申克残酷的管制形成强烈的对比，成为<strong>Hopeisthebestthing</strong>这句话最有力的注解。最后，电影中反复出现了一句话，<strong>Getbusyliving,orGetbusydying</strong>。安迪用小小的手锤经过17年，挖出了一条通往自由之路，通往希望之路。</p>
+<blockquote>
+<p>   每天的坚持，每天晚上一个人孤寂的挖掘，都在说明，他是真正做到了busyliving，而图书馆老人则为肖申克忙碌50年后，busydying！你的选择是什么？</p>
+</blockquote>
+]]></content>
+      
+        
+        <tags>
+            
+            <tag> 前言 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+  
+  
 </search>
