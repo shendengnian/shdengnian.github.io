@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title><![CDATA[wts1web]]></title>
+    <title><![CDATA[万兔岁商城+下单上门回收前端简介]]></title>
     <url>%2F2018%2F06%2F15%2Fwts1web%2F</url>
-    <content type="text"><![CDATA[111111111]]></content>
+    <content type="text"><![CDATA[考虑到安全性，对项目做了OAuth授权，只支持微信内置浏览器打开商城，内附真实线上链接与公众号二维码，想体验完整版流程请自行复制链接至微信端，此文章只附部分截图文章详情]]></content>
+      <tags>
+        <tag>项目展示</tag>
+      </tags>
   </entry>
   <entry>
     <title><![CDATA[线上从零部署运行TP5]]></title>
