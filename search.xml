@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title><![CDATA[万兔岁权限管理后台管理截图展示]]></title>
+    <title><![CDATA[万兔岁权限管理后台系统截图展示]]></title>
     <url>%2F2018%2F06%2F19%2Fwts3admin%2F</url>
     <content type="text"><![CDATA[该后台是万兔岁商城的权限管理后台，通过在权限管理后台添加账户并分配对应权限后，用添加好的账户在总后台登录，就只能显示和操作权限管理后台赋予的功能，开发权限管理后台初衷是为了方便管理划分公司内部不同岗位，防止误操和数据泄漏 公司项目，不提供账号密码登录后台进行操作体验，只提供截图演示 技术选型1、后端： • 核心框架：Spring Framework • 视图框架：Spring MVC • 持久层框架：MyBatis • 数据库连接池：Alibaba Druid • 缓存框架：Redis • 日志管理：SLF4J 、Log4j 2、后台管理前端界面： • JS框架：jQuery ，vue • CSS框架：bootstrap 框架界面 , H+ • 富文本：百度ueditor 万兔岁商家管理截图用户管理截图： 角色管理截图：]]></content>
       <tags>
@@ -9,7 +9,7 @@
       </tags>
   </entry>
   <entry>
-    <title><![CDATA[万兔岁商家管理后台截图展示]]></title>
+    <title><![CDATA[万兔岁商家管理后台系统截图展示]]></title>
     <url>%2F2018%2F06%2F19%2Fwts2admin%2F</url>
     <content type="text"><![CDATA[该后台是万兔岁商城的商家管理后台，在总后台的商家管理处添加商家的账号与个人信息创建账号密码，就可以拿账号密码登录这个商家管理后台，实现对自己的商品进行添加删除管理发货和售后订单，但上下架商品权限要由总后台决定是否提供。 公司项目，不提供账号密码登录后台进行操作体验，只提供截图演示 技术选型1、后端： • 核心框架：Spring Framework • 视图框架：Spring MVC • 持久层框架：MyBatis • 数据库连接池：Alibaba Druid • 缓存框架：Redis • 日志管理：SLF4J 、Log4j 2、后台管理前端界面： • JS框架：jQuery ，vue • CSS框架：bootstrap 框架界面 , H+ • 富文本：百度ueditor 万兔岁商家管理截图订单中心截图： 售后管理截图： 商品管理截图： 商品信息列表截图：]]></content>
       <tags>
@@ -17,7 +17,7 @@
       </tags>
   </entry>
   <entry>
-    <title><![CDATA[万兔岁总后台管理截图展示]]></title>
+    <title><![CDATA[万兔岁总后台管理系统截图展示]]></title>
     <url>%2F2018%2F06%2F15%2Fwts1admin%2F</url>
     <content type="text"><![CDATA[该后台是万兔岁商城与环保回收接单的总后台，还划分了另外两个子后台，分别是一个权限管理后台，分配权限并生成一个账号，在总后台登录该账号就拥有对应的权限操作。还有一个商家管理后台，在总后台添加商家信息和账号密码，就可以在商家管理后台用该账号密码登录实现添加修改商品发货售后等操作，由总后台分配该商家是否具有上下架商品权限操作，添加的商品也是对接到万兔岁商城前台。 公司项目，不提供账号密码登录后台进行操作体验，只提供截图演示 技术选型1、后端： • 核心框架：Spring Framework • 视图框架：Spring MVC • 持久层框架：MyBatis • 数据库连接池：Alibaba Druid • 缓存框架：Redis • 日志管理：SLF4J 、Log4j 2、后台管理前端界面： • JS框架：jQuery ，vue • CSS框架：bootstrap 框架界面 , H+ • 富文本：百度ueditor 万兔岁总后台管理截图登录后首页截图： 文章管理截图： 回收品管理截图： 积分管理截图： 收货人管理截图： 地址管理截图： 基础设置截图： 财务管理截图： 商品管理截图： 订单管理截图： 售后管理截图： 评价管理截图： 用户管理截图： 商家管理截图： 微信提现截图： 厨余中心截图：]]></content>
       <tags>
