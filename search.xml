@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title><![CDATA[小兔快收(小程序)]]></title>
+    <url>%2F2018%2F08%2F20%2Frabbit%2F</url>
+    <content type="text"><![CDATA[小兔快收是基于 web 端万兔岁商城回收端分离出来的一个微信小程序下单回收项目，主要实现了回 收类别，回收分类，积分总额，回收记录，二维码生成等功能 小程序码： 未上线暂无 项目技术: mpvue + 原生小程序组件开发方式: 前端用 mpvue 框架开发，mpvue 语法和 vue 大部分一致，可以通过 mpvue 开发后打包编译成小 程序项目，网络请求库采用 flyio 库，请求后端数据为 web 端的数据 开发版本部分截图开发截图：]]></content>
+      <tags>
+        <tag>项目展示</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[智菜谱(小程序)]]></title>
     <url>%2F2018%2F08%2F20%2Fturing%2F</url>
     <content type="text"><![CDATA[智小菜是我利用业余时间(周末，休息时间)基于欧拉蜜接口开发的一款集机器人聊天回复、天气 查询、菜谱查询、口算的微信小程序，支持语音识别与语音播报 代码地址： https://gitee.com/huangyinmei/turing 智菜谱部分截图首页截图：]]></content>
